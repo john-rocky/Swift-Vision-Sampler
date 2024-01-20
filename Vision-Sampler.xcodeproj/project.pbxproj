@@ -16,6 +16,7 @@
 		73E71F642B5AA3B6006134B1 /* Vision_SamplerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E71F632B5AA3B6006134B1 /* Vision_SamplerTests.swift */; };
 		73E71F6E2B5AA3B6006134B1 /* Vision_SamplerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E71F6D2B5AA3B6006134B1 /* Vision_SamplerUITests.swift */; };
 		73E71F702B5AA3B6006134B1 /* Vision_SamplerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E71F6F2B5AA3B6006134B1 /* Vision_SamplerUITestsLaunchTests.swift */; };
+		73E71F7D2B5B99B5006134B1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E71F7C2B5B99B4006134B1 /* ViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +50,7 @@
 		73E71F692B5AA3B6006134B1 /* Vision-SamplerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Vision-SamplerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		73E71F6D2B5AA3B6006134B1 /* Vision_SamplerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vision_SamplerUITests.swift; sourceTree = "<group>"; };
 		73E71F6F2B5AA3B6006134B1 /* Vision_SamplerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vision_SamplerUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		73E71F7C2B5B99B4006134B1 /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +103,7 @@
 			children = (
 				73E71F4C2B5AA3B5006134B1 /* AppDelegate.swift */,
 				73E71F4E2B5AA3B5006134B1 /* SceneDelegate.swift */,
+				73E71F7C2B5B99B4006134B1 /* ViewController.swift */,
 				73E71F502B5AA3B5006134B1 /* DetectBarcodeViewController.swift */,
 				73E71F522B5AA3B5006134B1 /* Main.storyboard */,
 				73E71F552B5AA3B6006134B1 /* Assets.xcassets */,
@@ -260,6 +263,7 @@
 			files = (
 				73E71F512B5AA3B5006134B1 /* DetectBarcodeViewController.swift in Sources */,
 				73E71F4D2B5AA3B5006134B1 /* AppDelegate.swift in Sources */,
+				73E71F7D2B5B99B5006134B1 /* ViewController.swift in Sources */,
 				73E71F4F2B5AA3B5006134B1 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

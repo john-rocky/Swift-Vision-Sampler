@@ -11,12 +11,14 @@ import AVFoundation
 
 class DetectBarcodeViewController: UIViewController,AVCaptureVideoDataOutputSampleBufferDelegate {
 
-    var videoOutput:AVCaptureVideoDataOutput!
-    var qrDetected = 0
-    var recentQRDetected = 0
-    var qrCodeString: String = ""
-    var request = VNDetectBarcodesRequest()
+    lazy var request:VNDetectBarcodesRequest =  {
+        let request = VNDetectBarcodesRequest(completionHandler: requestCompletionHandler)
+        return request
+    }()
     private var captureSession: AVCaptureSession!
+    var videoOutput:AVCaptureVideoDataOutput!
+    var processing = false
+
     private var preview = UIView()
     private lazy var previewLayer: AVCaptureVideoPreviewLayer = {
         let layer = AVCaptureVideoPreviewLayer(session: self.captureSession)
@@ -28,33 +30,16 @@ class DetectBarcodeViewController: UIViewController,AVCaptureVideoDataOutputSamp
     private var qrCodeFrameView = UIView()
     var qrCodeLabel = UILabel()
     var videoRect = CGRect.zero
-    var processing = false
     
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(preview)
-        preview.frame = view.bounds
-        
-        setupQRCodeFrame()
+        setupView()
         setupVideo()
-        Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { timer in
-            if self.qrDetected == self.recentQRDetected {
-                DispatchQueue.main.async {
-                    self.qrCodeFrameView.isHidden = true
-                    self.qrCodeLabel.isHidden = true
-                }
-            } else {
-                self.recentQRDetected = self.qrDetected
-            }
-        }
-
     }
     
     func setupVideo() {
-        
         let captureDevice:AVCaptureDevice = AVCaptureDevice.default(for: .video)!
-
         do {
             let input = try AVCaptureDeviceInput(device: captureDevice)
             captureSession = AVCaptureSession()
@@ -76,25 +61,22 @@ class DetectBarcodeViewController: UIViewController,AVCaptureVideoDataOutputSamp
             let videoSizeAspect = videoSize.width/videoSize.height
             let previewHeight = self.view.bounds.width * videoSizeAspect
             videoRect = CGRect(x: 0, y: (preview.bounds.height-previewHeight)/2, width: view.bounds.width, height: previewHeight)
-            print(videoRect)
 
-            DispatchQueue.global(qos: .userInitiated).async {
+            queue.async {
                 self.captureSession?.startRunning()
-
             }
         } catch {
             print("Error setting up capture session: \(error.localizedDescription)")
         }
     }
     
-    func setupQRCodeFrame() {
-        qrCodeFrameView.layer.borderColor = UIColor.red.cgColor
-        qrCodeFrameView.layer.borderWidth = 2
-        view.addSubview(qrCodeFrameView)
-        view.bringSubviewToFront(qrCodeFrameView)
-        qrCodeFrameView.isHidden = true
-        view.addSubview(qrCodeLabel)
-        qrCodeLabel.textColor = .red
+    func requestCompletionHandler(request:VNRequest?, error:Error?) {
+        guard let observation = request?.results?.first as? VNBarcodeObservation else {
+            barcodeNotDetected()
+            return
+        }
+        
+        barcodeDetected(observation: observation)
     }
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -104,40 +86,54 @@ class DetectBarcodeViewController: UIViewController,AVCaptureVideoDataOutputSamp
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer,orientation: .right, options: [:])
         do {
             try handler.perform([request])
-            guard let observation = request.results?.first as? VNBarcodeObservation else {
-                processing = false
-                return
-            }
-            processing = false
-            if let stringValue = observation.payloadStringValue {
-                self.qrCodeString = stringValue
-                print("QR Code Value: \(stringValue)")
-                
-                DispatchQueue.main.async {
-                    self.qrCodeLabel.isHidden = false
-                    self.qrCodeLabel.text = stringValue
-                }
-                qrDetected += 1
-                let box = observation.boundingBox
-                DispatchQueue.main.async { [self] in
-                    
-                    let invertBox = CGRect(x: box.minX, y: 1-box.maxY, width: box.width, height: box.height)
-                    var qrCodeFrame = VNImageRectForNormalizedRect(invertBox, Int(self.preview.bounds.width), Int(self.videoRect.height))
-                    qrCodeFrame = CGRect(x: qrCodeFrame.minX, y: qrCodeFrame.minY+videoRect.minY, width: qrCodeFrame.width, height: qrCodeFrame.height)
-                    print(qrCodeFrame)
-                    self.qrCodeLabel.isHidden = false
-                    self.qrCodeFrameView.isHidden = false
-                    self.qrCodeFrameView.frame = qrCodeFrame
-                    self.qrCodeLabel.frame = CGRect(x: self.qrCodeFrameView.frame.minX, y: self.qrCodeFrameView.frame.minY-40, width: 300, height: 40)
-                }
-            }
-            
         } catch {
             print("Vision error: \(error.localizedDescription)")
         }
-        
     }
-
+    
+    func barcodeDetected(observation: VNBarcodeObservation) {
+        processing = false
+        if let stringValue = observation.payloadStringValue {
+            print("QR Code Value: \(stringValue)")
+            
+            DispatchQueue.main.async {
+                self.qrCodeLabel.isHidden = false
+                self.qrCodeLabel.text = stringValue
+            }
+            let box = observation.boundingBox
+            DispatchQueue.main.async { [self] in
+                
+                let invertBox = CGRect(x: box.minX, y: 1-box.maxY, width: box.width, height: box.height)
+                var qrCodeFrame = VNImageRectForNormalizedRect(invertBox, Int(self.preview.bounds.width), Int(self.videoRect.height))
+                qrCodeFrame = CGRect(x: qrCodeFrame.minX, y: qrCodeFrame.minY+videoRect.minY, width: qrCodeFrame.width, height: qrCodeFrame.height)
+                print(qrCodeFrame)
+                self.qrCodeLabel.isHidden = false
+                self.qrCodeFrameView.isHidden = false
+                self.qrCodeFrameView.frame = qrCodeFrame
+                self.qrCodeLabel.frame = CGRect(x: self.qrCodeFrameView.frame.minX, y: self.qrCodeFrameView.frame.minY-40, width: 300, height: 40)
+            }
+        }
+    }
+    
+    func barcodeNotDetected() {
+        processing = false
+        DispatchQueue.main.async {
+            self.qrCodeFrameView.isHidden = true
+            self.qrCodeLabel.isHidden = true
+        }
+    }
+    
+    func setupView() {
+        view.addSubview(preview)
+        preview.frame = view.bounds
+        qrCodeFrameView.layer.borderColor = UIColor.red.cgColor
+        qrCodeFrameView.layer.borderWidth = 2
+        view.addSubview(qrCodeFrameView)
+        view.bringSubviewToFront(qrCodeFrameView)
+        qrCodeFrameView.isHidden = true
+        view.addSubview(qrCodeLabel)
+        qrCodeLabel.textColor = .red
+    }
 
 }
 
